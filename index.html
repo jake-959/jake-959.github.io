@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Number Spinner</title>
+	<style>
+		:root {
+			color-scheme: light;
+			--ink: #17251f;
+			--muted: #64736a;
+			--paper: #f5f2e9;
+			--green: #2b7658;
+			--green-dark: #1d5b42;
+			--coral: #e8795f;
+		}
+
+		* { box-sizing: border-box; }
+
+		body {
+			min-height: 100vh;
+			margin: 0;
+			display: grid;
+			place-items: center;
+			padding: 24px;
+			color: var(--ink);
+			background-color: var(--paper);
+			background-image: radial-gradient(#d9d4c6 0.8px, transparent 0.8px);
+			background-size: 19px 19px;
+			font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+		}
+
+		main {
+			width: min(100%, 440px);
+			padding: 38px 30px 30px;
+			text-align: center;
+			background: #fffdf7;
+			border: 1px solid #e3dece;
+			border-radius: 8px;
+			box-shadow: 0 16px 42px #343b3014;
+			animation: arrive 450ms ease-out both;
+		}
+
+		.eyebrow {
+			margin: 0 0 9px;
+			color: var(--green);
+			font-size: 12px;
+			font-weight: 800;
+			letter-spacing: 1.5px;
+			text-transform: uppercase;
+		}
+
+		h1 {
+			margin: 0;
+			font-family: Georgia, "Times New Roman", serif;
+			font-size: 36px;
+			font-weight: 700;
+		}
+
+		.intro {
+			margin: 10px 0 26px;
+			color: var(--muted);
+			font-size: 15px;
+		}
+
+		.result {
+			min-height: 196px;
+			display: grid;
+			place-content: center;
+			position: relative;
+			overflow: hidden;
+			border: 2px solid #dce8df;
+			border-radius: 8px;
+			background: linear-gradient(145deg, #f3f8f2, #e4efe5);
+		}
+
+		.result::before,
+		.result::after {
+			position: absolute;
+			width: 10px;
+			height: 10px;
+			content: "";
+			background: var(--coral);
+			border-radius: 50%;
+		}
+
+		.result::before { top: 16px; left: 17px; }
+		.result::after { right: 17px; bottom: 16px; }
+
+		#number {
+			color: var(--green-dark);
+			font-family: Georgia, "Times New Roman", serif;
+			font-size: clamp(76px, 22vw, 104px);
+			font-weight: 700;
+			line-height: 1;
+			font-variant-numeric: tabular-nums;
+		}
+
+		#number.spinning { animation: flip 120ms ease-in-out infinite alternate; }
+
+		#status {
+			min-height: 20px;
+			margin: 12px 0 22px;
+			color: var(--muted);
+			font-size: 13px;
+		}
+
+		.actions {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 10px;
+		}
+
+		button {
+			min-height: 48px;
+			padding: 0 16px;
+			border: 0;
+			border-radius: 6px;
+			font: inherit;
+			font-size: 15px;
+			font-weight: 700;
+			cursor: pointer;
+			transition: background-color 140ms ease, transform 140ms ease;
+		}
+
+		button:hover:not(:disabled) { transform: translateY(-2px); }
+		button:active:not(:disabled) { transform: translateY(0); }
+		button:focus-visible { outline: 3px solid var(--coral); outline-offset: 3px; }
+
+		#spin-button { color: white; background: var(--green); }
+		#spin-button:hover:not(:disabled) { background: var(--green-dark); }
+		#again-button { color: var(--green-dark); background: #e6eee6; }
+		#again-button:hover:not(:disabled) { background: #d7e5d8; }
+		button:disabled { cursor: not-allowed; opacity: 0.48; }
+
+		@keyframes flip {
+			from { transform: translateY(-4px) rotate(-2deg); }
+			to { transform: translateY(4px) rotate(2deg); }
+		}
+
+		@keyframes arrive {
+			from { opacity: 0; transform: translateY(10px); }
+			to { opacity: 1; transform: translateY(0); }
+		}
+
+		@media (max-width: 380px) {
+			main { padding: 30px 20px 22px; }
+			.actions { grid-template-columns: 1fr; }
+		}
+
+		@media (prefers-reduced-motion: reduce) {
+			*, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+		}
+	</style>
+</head>
+<body>
+	<main>
+		<p class="eyebrow">A little luck, coming up</p>
+		<h1>Number Spinner</h1>
+		<p class="intro">Pick a random number from 0 to 100.</p>
+
+		<section class="result" aria-label="Selected number">
+			<output id="number" aria-live="polite">?</output>
+		</section>
+		<p id="status" aria-live="polite">Ready when you are.</p>
+
+		<div class="actions">
+			<button id="spin-button" type="button">Spin</button>
+			<button id="again-button" type="button" disabled>Spin again</button>
+		</div>
+	</main>
+
+	<script>
+		const numberDisplay = document.querySelector("#number");
+		const status = document.querySelector("#status");
+		const spinButton = document.querySelector("#spin-button");
+		const againButton = document.querySelector("#again-button");
+
+		function spin() {
+			spinButton.disabled = true;
+			againButton.disabled = true;
+			numberDisplay.classList.add("spinning");
+			status.textContent = "Spinning...";
+
+			const duration = 900;
+			const startedAt = performance.now();
+
+			function animateNumber(now) {
+				numberDisplay.textContent = Math.floor(Math.random() * 101);
+
+				if (now - startedAt < duration) {
+					requestAnimationFrame(animateNumber);
+					return;
+				}
+
+				numberDisplay.textContent = Math.floor(Math.random() * 101);
+				numberDisplay.classList.remove("spinning");
+				status.textContent = "Your number is in!";
+				spinButton.disabled = false;
+				againButton.disabled = false;
+			}
+
+			requestAnimationFrame(animateNumber);
+		}
+
+		spinButton.addEventListener("click", spin);
+		againButton.addEventListener("click", spin);
+	</script>
+</body>
+</html>
